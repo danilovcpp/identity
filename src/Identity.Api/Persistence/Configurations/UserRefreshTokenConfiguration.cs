@@ -1,3 +1,4 @@
+using Identity.Api.Entities;
 using Identity.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

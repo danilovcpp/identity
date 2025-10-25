@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using Identity.Api.Abstractions;
+using Identity.Api.Entities;
 using Identity.Api.Models;
 using Identity.Api.Models.Options;
 using Microsoft.AspNetCore.Identity;

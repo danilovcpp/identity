@@ -1,4 +1,5 @@
 using Identity.Api.Abstractions;
+using Identity.Api.Models.Options;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -6,23 +7,18 @@ using Microsoft.Extensions.Options;
 
 namespace Identity.Api.Services;
 
-public class EmailSender : IEmailSender
+public class EmailSender(
+    IOptions<SmtpOptions> smtpOptions,
+    ILogger<EmailSender> logger) : IEmailSender
 {
-    private readonly SmtpSettings _smtpSettings;
-    private readonly ILogger<EmailSender> _logger;
-
-    public EmailSender(IOptions<SmtpSettings> smtpSettings, ILogger<EmailSender> logger)
-    {
-        _smtpSettings = smtpSettings.Value;
-        _logger = logger;
-    }
+    private readonly SmtpOptions _smtpOptions = smtpOptions.Value;
 
     public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
     {
         try
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_smtpSettings.FromName, _smtpSettings.FromEmail));
+            message.From.Add(new MailboxAddress(_smtpOptions.FromName, _smtpOptions.FromEmail));
             message.To.Add(MailboxAddress.Parse(to));
             message.Subject = subject;
 
@@ -35,41 +31,31 @@ public class EmailSender : IEmailSender
             {
                 bodyBuilder.TextBody = body;
             }
+
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
 
             // Connect to SMTP server
-            await client.ConnectAsync(_smtpSettings.Host, _smtpSettings.Port,
-                _smtpSettings.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
+            await client.ConnectAsync(_smtpOptions.Host, _smtpOptions.Port,
+                _smtpOptions.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls);
 
             // Authenticate if credentials are provided
-            if (!string.IsNullOrEmpty(_smtpSettings.Username) && !string.IsNullOrEmpty(_smtpSettings.Password))
+            if (!string.IsNullOrEmpty(_smtpOptions.Username) && !string.IsNullOrEmpty(_smtpOptions.Password))
             {
-                await client.AuthenticateAsync(_smtpSettings.Username, _smtpSettings.Password);
+                await client.AuthenticateAsync(_smtpOptions.Username, _smtpOptions.Password);
             }
 
             // Send email
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
 
-            _logger.LogInformation("Email sent successfully to {To}", to);
+            logger.LogInformation("Email sent successfully to {To}", to);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {To}", to);
+            logger.LogError(ex, "Failed to send email to {To}", to);
             throw;
         }
     }
-}
-
-public class SmtpSettings
-{
-    public string Host { get; set; } = string.Empty;
-    public int Port { get; set; }
-    public bool UseSsl { get; set; }
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = string.Empty;
 }

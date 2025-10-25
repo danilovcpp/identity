@@ -1,5 +1,5 @@
 ﻿using Identity.Api.Abstractions;
-using Identity.Api.Models;
+using Identity.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Api.Services;
@@ -10,6 +10,8 @@ public class EmailConfirmationService(
     IConfirmationLinkGenerator confirmationLinkGenerator,
     IConfirmationEmailBuilder confirmationEmailBuilder) : IEmailConfirmationService
 {
+    private const string ConfirmationSubject = "Подтверждение регистрации";
+
     public async Task SendConfirmationLink(ApplicationUser user)
     {
         var confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -18,7 +20,7 @@ public class EmailConfirmationService(
 
         await emailSender.SendEmailAsync(
             user.Email,
-            "Подтверждение регистрации",
+            ConfirmationSubject,
             emailBody);
     }
 }

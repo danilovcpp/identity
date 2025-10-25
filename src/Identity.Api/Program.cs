@@ -1,4 +1,5 @@
 using Identity.Api.Abstractions;
+using Identity.Api.Entities;
 using Identity.Api.Models;
 using Identity.Api.Models.Options;
 using Identity.Api.Persistence;
@@ -17,7 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IApplicationDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
 
-builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));

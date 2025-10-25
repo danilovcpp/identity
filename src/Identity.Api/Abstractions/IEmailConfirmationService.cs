@@ -1,4 +1,5 @@
-﻿using Identity.Api.Models;
+﻿using Identity.Api.Entities;
+using Identity.Api.Models;
 
 namespace Identity.Api.Abstractions;
 

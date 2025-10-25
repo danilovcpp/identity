@@ -6,6 +6,7 @@ using Identity.Api.Abstractions;
 using Identity.Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Api.Controllers;
@@ -16,18 +17,18 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IConfiguration _config;
+    private readonly JwtSettings _jwtSettings;
     private readonly IEmailSender _emailSender;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IConfiguration config,
+        IOptions<JwtSettings> jwtSettings,
         IEmailSender emailSender)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _config = config;
+        _jwtSettings = jwtSettings.Value;
         _emailSender = emailSender;
     }
 
@@ -88,7 +89,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Неверный email или пароль" });
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
@@ -96,7 +97,7 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName)
             }),
-            Expires = DateTime.UtcNow.AddHours(12),
+            Expires = DateTime.UtcNow.AddHours(_jwtSettings.ExpirationHours),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)

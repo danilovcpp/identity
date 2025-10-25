@@ -19,6 +19,8 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.Password.RequiredLength = 6;
@@ -35,6 +37,9 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer("JwtBearer", options =>
     {
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
+            ?? throw new InvalidOperationException("JWT settings are not configured");
+
         options.TokenValidationParameters = new()
         {
             ValidateIssuer = false,
@@ -42,7 +47,7 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                System.Text.Encoding.UTF8.GetBytes(jwtSettings.Key))
         };
     });
 

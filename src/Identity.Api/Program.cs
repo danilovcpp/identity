@@ -1,6 +1,7 @@
 using Identity.Api.Abstractions;
 using Identity.Api.Models;
 using Identity.Api.Persistence;
+using Identity.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +15,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IApplicationDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
+
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

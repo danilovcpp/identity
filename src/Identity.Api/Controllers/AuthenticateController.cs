@@ -1,9 +1,10 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
-using Identity.Api.Infrastructure;
 using Identity.Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Api.Controllers;
 
@@ -37,34 +38,33 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    // [HttpPost("login")]
-    // public async Task<IActionResult> Login(LoginDto dto)
-    // {
-    //     var user = await _userManager.FindByEmailAsync(dto.Email);
-    //     if (user == null) return Unauthorized();
-    //
-    //     var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
-    //     if (!result.Succeeded) return Unauthorized();
-    //
-    //     // Создаем JWT токен
-    //     var tokenHandler = new JwtSecurityTokenHandler();
-    //     var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
-    //     var tokenDescriptor = new SecurityTokenDescriptor
-    //     {
-    //         Subject = new ClaimsIdentity(new[]
-    //         {
-    //             new Claim(ClaimTypes.NameIdentifier, user.Id),
-    //             new Claim(ClaimTypes.Name, user.UserName)
-    //         }),
-    //         Expires = DateTime.UtcNow.AddHours(12),
-    //         SigningCredentials = new SigningCredentials(
-    //             new SymmetricSecurityKey(key),
-    //             SecurityAlgorithms.HmacSha256Signature)
-    //     };
-    //
-    //     var token = tokenHandler.CreateToken(tokenDescriptor);
-    //     return Ok(new { token = tokenHandler.WriteToken(token) });
-    // }
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginDto dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null) return Unauthorized();
+    
+        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+        if (!result.Succeeded) return Unauthorized();
+    
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName)
+            }),
+            Expires = DateTime.UtcNow.AddHours(12),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+    
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return Ok(new { token = tokenHandler.WriteToken(token) });
+    }
 }
 
 public record RegisterDto(string Email, string Password);

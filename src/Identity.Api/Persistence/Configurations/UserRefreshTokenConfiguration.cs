@@ -16,9 +16,9 @@ public class UserRefreshTokenConfiguration : IEntityTypeConfiguration<UserRefres
             .IsRequired()
             .HasMaxLength(450);
 
-        builder.Property(x => x.Token)
+        builder.Property(x => x.TokenHash)
             .IsRequired()
-            .HasMaxLength(500);
+            .HasMaxLength(64); // SHA256 hash is 64 characters in hex
 
         builder.Property(x => x.ExpiresAt)
             .IsRequired();
@@ -30,7 +30,7 @@ public class UserRefreshTokenConfiguration : IEntityTypeConfiguration<UserRefres
             .IsRequired(false);
 
         // Index for faster lookups
-        builder.HasIndex(x => x.Token)
+        builder.HasIndex(x => x.TokenHash)
             .IsUnique();
 
         builder.HasIndex(x => x.UserId);

@@ -1,5 +1,6 @@
 using Identity.Api.Abstractions;
 using Identity.Api.Models;
+using Identity.Api.Models.Options;
 using Identity.Api.Persistence;
 using Identity.Api.Services;
 using Microsoft.AspNetCore.Identity;
@@ -19,7 +20,7 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -37,7 +38,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer("JwtBearer", options =>
     {
-        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
+        var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
             ?? throw new InvalidOperationException("JWT settings are not configured");
 
         options.TokenValidationParameters = new()
@@ -47,9 +48,15 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                System.Text.Encoding.UTF8.GetBytes(jwtSettings.Key))
+                System.Text.Encoding.UTF8.GetBytes(jwtOptions.Secret))
         };
     });
+
+
+builder.Services.AddScoped<IAccessTokenService, AccessTokenService>();
+builder.Services.AddScoped<IConfirmationLinkGenerator, ConfirmationLinkGenerator>();
+builder.Services.AddSingleton<IConfirmationEmailBuilder, ConfirmationEmailBuilder>();
+builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

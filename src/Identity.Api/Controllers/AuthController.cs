@@ -1,15 +1,12 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using System.Web;
 using Identity.Api.Abstractions;
 using Identity.Api.Models;
+using Identity.Api.Models.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Identity.Api.Controllers;
 
@@ -19,22 +16,25 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly JwtSettings _jwtSettings;
-    private readonly IEmailSender _emailSender;
-    private readonly IApplicationDbContext _dbContext;
+    private readonly JwtOptions _jwtOptions;
+    private readonly IApplicationDbContext _context;
+    private readonly IAccessTokenService _accessTokenService;
+    private readonly IEmailConfirmationService _emailConfirmationService;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IOptions<JwtSettings> jwtSettings,
-        IEmailSender emailSender,
-        IApplicationDbContext dbContext)
+        IOptions<JwtOptions> jwtOptions,
+        IApplicationDbContext context,
+        IAccessTokenService accessTokenService,
+        IEmailConfirmationService emailConfirmationService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _jwtSettings = jwtSettings.Value;
-        _emailSender = emailSender;
-        _dbContext = dbContext;
+        _jwtOptions = jwtOptions.Value;
+        _context = context;
+        _accessTokenService = accessTokenService;
+        _emailConfirmationService = emailConfirmationService;
     }
 
     [HttpPost("register")]
@@ -46,18 +46,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = HttpUtility.UrlEncode(token);
-        var confirmationLink = $"{Request.Scheme}://{Request.Host}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
-
-        await _emailSender.SendEmailAsync(
-            user.Email,
-            "Подтверждение регистрации",
-            $@"<h2>Добро пожаловать!</h2>
-               <p>Пожалуйста, подтвердите ваш email, перейдя по ссылке:</p>
-               <p><a href='{confirmationLink}'>Подтвердить email</a></p>
-               <p>Или скопируйте ссылку в браузер:</p>
-               <p>{confirmationLink}</p>");
+        await _emailConfirmationService.SendConfirmationLink(user);
 
         return Ok(new { message = "Регистрация успешна. Проверьте email для подтверждения." });
     }
@@ -93,7 +82,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return Unauthorized(new { message = "Неверный email или пароль" });
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = _accessTokenService.GenerateAccessTokenAsync(user);
         var refreshToken = GenerateRefreshToken();
         var tokenHash = HashToken(refreshToken);
 
@@ -106,14 +95,14 @@ public class AuthController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        _dbContext.UserRefreshTokens.Add(userRefreshToken);
-        await _dbContext.SaveChangesAsync(CancellationToken.None);
+        _context.UserRefreshTokens.Add(userRefreshToken);
+        await _context.SaveChangesAsync(CancellationToken.None);
 
         return Ok(new
         {
             accessToken = accessToken,
             refreshToken = refreshToken,
-            expiresIn = _jwtSettings.ExpirationHours * 3600 // in seconds
+            expiresIn = _jwtOptions.AccessTokenLifetimeMinutes * 60 // in seconds
         });
     }
 
@@ -122,20 +111,20 @@ public class AuthController : ControllerBase
     {
         var tokenHash = HashToken(dto.RefreshToken);
 
-        var userRefreshToken = await _dbContext.UserRefreshTokens
+        var userRefreshToken = await _context.UserRefreshTokens
             .Include(rt => rt.User)
             .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
 
         if (userRefreshToken == null || !userRefreshToken.IsActive)
             return Unauthorized(new { message = "Недействительный или истекший refresh token" });
 
-        var accessToken = GenerateAccessToken(userRefreshToken.User);
+        var accessToken = _accessTokenService.GenerateAccessTokenAsync(userRefreshToken.User);
 
         return Ok(new
         {
             accessToken = accessToken,
             refreshToken = dto.RefreshToken, // Return the same refresh token
-            expiresIn = _jwtSettings.ExpirationHours * 3600 // in seconds
+            expiresIn = _jwtOptions.RefreshTokenLifetimeDays * 24 * 3600 // in seconds
         });
     }
 
@@ -144,7 +133,7 @@ public class AuthController : ControllerBase
     {
         var tokenHash = HashToken(dto.RefreshToken);
 
-        var userRefreshToken = await _dbContext.UserRefreshTokens
+        var userRefreshToken = await _context.UserRefreshTokens
             .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash);
 
         if (userRefreshToken == null)
@@ -154,30 +143,9 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Refresh token уже отозван" });
 
         userRefreshToken.RevokedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync(CancellationToken.None);
+        await _context.SaveChangesAsync(CancellationToken.None);
 
         return Ok(new { message = "Refresh token успешно отозван" });
-    }
-
-    private string GenerateAccessToken(ApplicationUser user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key);
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName!)
-            }),
-            Expires = DateTime.UtcNow.AddHours(_jwtSettings.ExpirationHours),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
     }
 
     private static string GenerateRefreshToken()

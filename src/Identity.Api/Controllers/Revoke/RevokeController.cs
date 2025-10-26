@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Identity.Api.Core;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers.Revoke;
 
@@ -8,7 +9,7 @@ public class RevokeController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Revoke(
-        [FromServices] RevokeRequestHandler handler,
+        [FromServices] IRequestHandler<RevokeRequest, RevokeResponse> handler,
         [FromBody] RevokeRequest request)
     {
         var response = await handler.HandleAsync(request);

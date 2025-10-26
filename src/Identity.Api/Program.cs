@@ -1,5 +1,6 @@
 using Identity.Api;
 using Identity.Api.Abstractions;
+using Identity.Api.Behaviours;
 using Identity.Api.Entities;
 using Identity.Api.Models;
 using Identity.Api.Models.Options;
@@ -70,7 +71,13 @@ else
     builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
 }
 
-builder.Services.AddRequestHandlers();
+builder.Services.AddRequestHandlers(pipeline =>
+{
+    // Configure the pipeline behaviours in execution order
+    pipeline.AddBehaviour(typeof(LoggingBehaviour<,>));
+    pipeline.AddBehaviour(typeof(ValidationBehaviour<,>));
+    // Add more behaviours here as needed
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

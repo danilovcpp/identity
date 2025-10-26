@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Identity.Api.Core;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers.ConfirmEmail;
 
@@ -8,10 +9,10 @@ public class ConfirmEmailController : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(
-        [FromServices] ConfirmEmailRequestHandler requestHandler,
+        [FromServices] IRequestHandler<ConfirmEmailRequest, ConfirmEmailResponse> handler,
         [FromQuery] ConfirmEmailRequest request)
     {
-        var response = await requestHandler.HandleAsync(request);
+        var response = await handler.HandleAsync(request);
         return Ok(response);
     }
 }

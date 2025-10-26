@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Identity.Api.Core;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers.Refresh;
 
@@ -8,7 +9,7 @@ public class RefreshController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Refresh(
-        [FromServices] RefreshRequestHandler handler,
+        [FromServices] IRequestHandler<RefreshRequest, RefreshResponse> handler,
         [FromBody] RefreshRequest request)
     {
         var response = await handler.HandleAsync(request);

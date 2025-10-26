@@ -4,32 +4,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an ASP.NET Core 8.0 Identity API service that provides JWT-based authentication. The project uses:
+This is an ASP.NET Core 8.0 Identity API service that provides JWT-based authentication with refresh token support and email confirmation. The project uses:
 - **ASP.NET Core Identity** for user management
 - **Entity Framework Core** with PostgreSQL for data persistence
-- **JWT Bearer tokens** for authentication
+- **JWT Bearer tokens** with refresh tokens for authentication
+- **MailKit** for email confirmation functionality
 - **Swagger/OpenAPI** for API documentation
+
+## Solution Structure
+
+The solution contains two projects:
+- **Identity.Api** - Main API project with controllers, services, and persistence
+- **Identity.Domain** - Domain layer with entity definitions (currently minimal usage)
 
 ## Architecture
 
-### Project Structure
-- `Identity.Api` - Main API project containing:
-  - `Controllers/` - API endpoints (AuthController for registration/login)
-  - `Models/` - Domain models (ApplicationUser extends IdentityUser)
-  - `Persistence/` - Database context and migrations
-  - `Abstractions/` - Interface definitions (IApplicationDbContext)
-
 ### Key Architectural Patterns
-- **Repository Pattern**: IApplicationDbContext abstraction provides a clean separation between the domain and data access layers
-- **ASP.NET Core Identity**: Built on top of IdentityDbContext with ApplicationUser as the custom user model
-- **JWT Authentication**: Configured with symmetric key signing (HS256), tokens expire after 12 hours
-- **Auto-Migration**: In development, database migrations run automatically on startup ([Program.cs:57](src/Identity.Api/Program.cs#L57))
 
-### Authentication Flow
-1. User registers via `/api/auth/register` endpoint
-2. User logs in via `/api/auth/login` with email/password
-3. On successful login, a JWT token is generated with user claims (NameIdentifier, Name)
-4. Token must be included in Authorization header for protected endpoints
+**Request Handler Pattern**: The codebase uses a custom request/response handler pattern rather than traditional service layers:
+- Controllers are thin and delegate to request handlers via `IRequestHandler<TRequest, TResponse>`
+- Each endpoint has its own folder containing: `Controller`, `Request`, `Response`, `RequestHandler`, and `Exceptions`
+- Request handlers are automatically registered via reflection in [DependencyInjection.cs](src/Identity.Api/DependencyInjection.cs)
+- Example: Login functionality lives in `Controllers/Login/` with `LoginController`, `LoginRequest`, `LoginResponse`, and `LoginRequestHandler`
+
+**Database Access**:
+- `ApplicationDbContext` inherits from `IdentityDbContext<ApplicationUser>` and implements `IApplicationDbContext`
+- Custom entity: `UserRefreshToken` stores hashed refresh tokens with expiration and revocation support
+- All `IEntityTypeConfiguration` implementations are auto-applied from assembly
+
+**Authentication Architecture**:
+- JWT access tokens (default: 15 minute lifetime) via `IAccessTokenService`
+- Refresh tokens (7 day lifetime) via `IRefreshTokenService` - tokens are hashed before storage using SHA256
+- Email confirmation required for login ([Program.cs:31](src/Identity.Api/Program.cs#L31))
+- In development: email confirmations are logged via `LogConfirmationService`
+- In production: emails sent via SMTP using `EmailConfirmationService` and MailKit
+
+**Service Abstractions**: All major functionality is defined via interfaces in `Abstractions/`:
+- `IAccessTokenService` - JWT generation
+- `IRefreshTokenService` - Refresh token generation and hashing
+- `IEmailSender` - SMTP email delivery
+- `IEmailConfirmationService` - Orchestrates confirmation email sending
+- `IConfirmationLinkGenerator` - Generates confirmation URLs
+- `IConfirmationEmailBuilder` - Builds HTML email content
+
+### API Endpoints
+
+All endpoints are organized by feature in `Controllers/`:
+- **POST /api/register** - User registration (sends confirmation email)
+- **POST /api/login** - Login with email/password (returns access + refresh tokens)
+- **POST /api/refresh** - Refresh access token using refresh token
+- **POST /api/revoke** - Revoke a refresh token
+- **GET /api/confirm-email** - Confirm email via token link
 
 ## Development Commands
 
@@ -50,7 +75,7 @@ dotnet watch --project src/Identity.Api/Identity.Api.csproj
 # Add a new migration (run from solution root)
 dotnet ef migrations add MigrationName --project src/Identity.Api/Identity.Api.csproj
 
-# Update database manually
+# Update database manually (not needed in development - auto-migrates)
 dotnet ef database update --project src/Identity.Api/Identity.Api.csproj
 
 # Remove last migration
@@ -68,38 +93,63 @@ docker run -p 8080:8080 -p 8081:8081 identity-api
 
 ## Configuration
 
-### Required Settings
-The application requires the following configuration in `appsettings.Development.json`:
+### Required Settings in appsettings.Development.json
+
+**Database**:
 - `ConnectionStrings:IdentityDatabase` - PostgreSQL connection string
-- `Jwt:Key` - Secret key for JWT signing (must be at least 256 bits)
+- Default: `server=localhost;port=5432;user id=postgres;password=postgres;database=identity`
 
-### Default Configuration
-- PostgreSQL: `localhost:5432`, database: `identity`, user: `postgres`, password: `postgres`
-- JWT Key: `a-string-secret-at-least-256-bits-long` (development only)
-- Password Requirements: Minimum 6 characters, non-alphanumeric not required ([Program.cs:20-21](src/Identity.Api/Program.cs#L20-L21))
+**JWT**:
+- `Jwt:Secret` - Signing key (must be at least 256 bits)
+- `Jwt:AccessTokenLifetimeMinutes` - Access token expiration (default: 15)
+- `Jwt:RefreshTokenLifetimeDays` - Refresh token expiration (default: 7)
+- Note: Issuer and Audience are configured but NOT validated ([Program.cs:48-49](src/Identity.Api/Program.cs#L48-L49))
 
-## Database
+**SMTP** (required for production email confirmation):
+- `Smtp:Host` - SMTP server (default: smtp.gmail.com)
+- `Smtp:Port` - SMTP port (default: 587)
+- `Smtp:UseSsl` - Use SSL/TLS (default: false)
+- `Smtp:Username` - SMTP username
+- `Smtp:Password` - SMTP password
+- `Smtp:FromEmail` - Sender email address
+- `Smtp:FromName` - Sender display name
 
-### Provider
-PostgreSQL via Npgsql.EntityFrameworkCore.PostgreSQL
+### Identity Configuration
 
-### Context
-ApplicationDbContext inherits from IdentityDbContext<ApplicationUser> and implements IApplicationDbContext. It automatically applies all IEntityTypeConfiguration implementations from the assembly.
+Password requirements ([Program.cs:29-30](src/Identity.Api/Program.cs#L29-L30)):
+- Minimum 6 characters
+- Non-alphanumeric characters NOT required
+- Email confirmation required for sign-in ([Program.cs:31](src/Identity.Api/Program.cs#L31))
 
-### Migrations
-Located in `src/Identity.Api/Persistence/Migrations/`. In development mode, migrations are applied automatically on application startup.
+### Auto-Migration
 
-## API Endpoints
+In development environment, database migrations run automatically on startup ([Program.cs:85-88](src/Identity.Api/Program.cs#L85-L88)).
 
-### Authentication
-- `POST /api/auth/register` - Register a new user (email, password)
-- `POST /api/auth/login` - Login and receive JWT token (email, password)
+## Important Implementation Details
 
-### Development
-API is accessible at `http://localhost:5096` (default development port).
-Swagger UI is available at `/swagger` in development environment.
+**Refresh Token Security**:
+- Tokens are generated as cryptographically secure random strings
+- Only SHA256 hashes are stored in database, never plaintext tokens
+- Tokens track expiration, revocation, and creation timestamps
+- `UserRefreshToken` entity has computed properties: `IsRevoked`, `IsExpired`, `IsActive`
 
-## Notes
-- No test projects currently exist in the solution
-- JWT validation is configured without issuer/audience validation ([Program.cs:35-36](src/Identity.Api/Program.cs#L35-L36))
-- Authentication and authorization middleware order is critical: UseAuthentication() must come before UseAuthorization()
+**Email Confirmation Flow**:
+1. User registers → confirmation token generated by Identity framework
+2. Confirmation link built with token and user ID
+3. In dev: link logged to console; In prod: email sent via SMTP
+4. User clicks link → `POST /api/confirm-email` with userId and token
+5. Login endpoint checks email confirmation before allowing access
+
+**Error Handling**:
+- Custom exceptions per feature (e.g., `UnauthorizedException`, `EmailNotConfirmedException`, `InvalidRefreshTokenException`)
+- Exceptions organized in feature-specific `Exceptions/` folders
+
+## Adding New Endpoints
+
+To add a new endpoint following the existing pattern:
+1. Create folder in `Controllers/` (e.g., `Controllers/NewFeature/`)
+2. Add `NewFeatureController.cs` with route and HTTP method
+3. Add `NewFeatureRequest.cs` and `NewFeatureResponse.cs` DTOs
+4. Add `NewFeatureRequestHandler.cs` implementing `IRequestHandler<NewFeatureRequest, NewFeatureResponse>`
+5. Add any custom exceptions in `Exceptions/` subfolder
+6. Request handler will be auto-registered by `AddRequestHandlers()` in [DependencyInjection.cs](src/Identity.Api/DependencyInjection.cs)

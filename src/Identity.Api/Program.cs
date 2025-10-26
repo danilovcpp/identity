@@ -1,3 +1,4 @@
+using Identity.Api;
 using Identity.Api.Abstractions;
 using Identity.Api.Entities;
 using Identity.Api.Models;
@@ -55,9 +56,21 @@ builder.Services.AddAuthentication(options =>
 
 
 builder.Services.AddScoped<IAccessTokenService, AccessTokenService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
 builder.Services.AddScoped<IConfirmationLinkGenerator, ConfirmationLinkGenerator>();
 builder.Services.AddSingleton<IConfirmationEmailBuilder, ConfirmationEmailBuilder>();
-builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IEmailConfirmationService, LogConfirmationService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+}
+
+builder.Services.AddRequestHandlers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

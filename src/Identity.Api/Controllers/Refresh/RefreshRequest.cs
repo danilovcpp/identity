@@ -1,3 +1,5 @@
-﻿namespace Identity.Api.Controllers.Refresh;
+﻿using Identity.Api.Core;
 
-public record RefreshRequest(string RefreshToken);
+namespace Identity.Api.Controllers.Refresh;
+
+public record RefreshRequest(string RefreshToken) : IRequest<RefreshResponse>;

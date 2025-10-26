@@ -1,3 +1,5 @@
-﻿namespace Identity.Api.Controllers.Login;
+﻿using Identity.Api.Core;
 
-public record LoginRequest(string Email, string Password);
+namespace Identity.Api.Controllers.Login;
+
+public record LoginRequest(string Email, string Password) : IRequest<LoginResponse>;

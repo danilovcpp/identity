@@ -1,3 +1,5 @@
-﻿namespace Identity.Api.Controllers.Register;
+﻿using Identity.Api.Core;
 
-public record RegisterRequest(string Email, string Password);
+namespace Identity.Api.Controllers.Register;
+
+public record RegisterRequest(string Email, string Password) : IRequest<RegisterResponse>;

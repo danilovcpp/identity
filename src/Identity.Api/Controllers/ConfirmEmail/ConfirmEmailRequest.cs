@@ -1,3 +1,5 @@
-﻿namespace Identity.Api.Controllers.ConfirmEmail;
+﻿using Identity.Api.Core;
 
-public record ConfirmEmailRequest(string UserId, string Token);
+namespace Identity.Api.Controllers.ConfirmEmail;
+
+public record ConfirmEmailRequest(string UserId, string Token) : IRequest<ConfirmEmailResponse>;

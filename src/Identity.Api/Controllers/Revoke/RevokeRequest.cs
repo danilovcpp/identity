@@ -1,3 +1,5 @@
-﻿namespace Identity.Api.Controllers.Revoke;
+﻿using Identity.Api.Core;
 
-public record RevokeRequest(string RefreshToken);
+namespace Identity.Api.Controllers.Revoke;
+
+public record RevokeRequest(string RefreshToken) : IRequest<RevokeResponse>;

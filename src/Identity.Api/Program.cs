@@ -50,13 +50,18 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IConfirmationLinkGenerator, ConfirmationLinkGenerator>();
 builder.Services.AddSingleton<IConfirmationEmailBuilder, ConfirmationEmailBuilder>();
 
+builder.Services.AddScoped<IPasswordResetLinkGenerator, PasswordResetLinkGenerator>();
+builder.Services.AddSingleton<IPasswordResetEmailBuilder, PasswordResetEmailBuilder>();
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<IEmailConfirmationService, LogConfirmationService>();
+    builder.Services.AddScoped<IPasswordResetEmailService, LogPasswordResetService>();
 }
 else
 {
     builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+    builder.Services.AddScoped<IPasswordResetEmailService, PasswordResetEmailService>();
 }
 
 builder.Services.AddRequestHandlers();

@@ -11,6 +11,6 @@ public class ConfirmationLinkGenerator : IConfirmationLinkGenerator
         var scheme = ""; // todo: взять из Options
         var host = "";
 
-        return $"{scheme}://{host}/api/auth/confirm-email?userId={userId}&token={encodedToken}";
+        return $"{scheme}://{host}/api/confirm-email?userId={userId}&token={encodedToken}";
     }
 }

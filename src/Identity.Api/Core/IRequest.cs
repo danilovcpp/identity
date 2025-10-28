@@ -1,9 +1,10 @@
 ﻿namespace Identity.Api.Core;
 
-public interface IRequest
-{
-}
-
-public interface IRequest<TResponse>
-{
-}
+// not used
+// public interface IRequest
+// {
+// }
+//
+// public interface IRequest<TResponse>
+// {
+// }

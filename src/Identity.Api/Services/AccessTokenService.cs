@@ -2,8 +2,8 @@
 using System.Security.Claims;
 using System.Text;
 using Identity.Api.Abstractions;
-using Identity.Api.Entities;
-using Identity.Api.Models.Options;
+using Identity.Application.Models.Options;
+using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

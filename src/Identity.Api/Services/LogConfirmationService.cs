@@ -1,5 +1,5 @@
 ﻿using Identity.Api.Abstractions;
-using Identity.Api.Entities;
+using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Api.Services;

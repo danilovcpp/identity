@@ -10,6 +10,7 @@ This is an ASP.NET Core 8.0 Identity API service that provides JWT-based authent
 - **JWT Bearer tokens** with refresh tokens for authentication
 - **MediatR** (CQRS pattern) for request handling
 - **MailKit** for email confirmation functionality
+- **MinIO** for avatar file storage
 - **Swagger/OpenAPI** for API documentation
 
 ## Solution Structure
@@ -63,6 +64,7 @@ The solution follows Clean Architecture principles with four projects:
 - `IPasswordResetEmailService` - Orchestrates password reset email sending
 - `IPasswordResetLinkGenerator` - Generates password reset URLs
 - `IPasswordResetEmailBuilder` - Builds HTML email content for password reset
+- `IFileStorageService` - File storage abstraction for MinIO operations
 
 ### API Endpoints
 
@@ -74,6 +76,8 @@ All endpoints are defined in [Identity.Api/Controllers/](src/Identity.Api/Contro
 - **POST /api/confirm-email** - Confirm email via token link
 - **POST /api/forgot-password** - Request password reset (sends reset email)
 - **POST /api/reset-password** - Reset password using token
+- **POST /api/avatar/upload** - Upload user avatar (requires authentication, multipart/form-data)
+- **DELETE /api/avatar** - Delete user avatar (requires authentication)
 
 ## Development Commands
 
@@ -133,6 +137,13 @@ docker run -p 8080:8080 -p 8081:8081 identity-api
 - `Smtp:FromEmail` - Sender email address
 - `Smtp:FromName` - Sender display name
 
+**MinIO** (required for avatar storage):
+- `Minio:Endpoint` - MinIO server endpoint (default: localhost:9000)
+- `Minio:AccessKey` - MinIO access key (default: minioadmin)
+- `Minio:SecretKey` - MinIO secret key (default: minioadmin)
+- `Minio:BucketName` - Bucket name for avatars (default: avatars)
+- `Minio:UseSSL` - Use SSL/TLS connection (default: false)
+
 ### Identity Configuration
 
 Password requirements (configured in [Identity.Infrastructure/DependencyInjection.cs](src/Identity.Infrastructure/DependencyInjection.cs)):
@@ -168,8 +179,25 @@ In development environment, database migrations run automatically on startup ([P
 6. Token validated and password updated
 7. Security: Returns success for non-existent users to prevent email enumeration
 
+**Avatar Upload Flow**:
+1. User authenticated → `POST /api/avatar/upload` with multipart/form-data (IFormFile)
+2. File validated (type: JPEG/PNG/GIF/WebP, max size: 5 MB)
+3. Old avatar deleted from MinIO if exists
+4. New avatar uploaded to MinIO with unique filename (format: `avatars/{userId}_{guid}.ext`)
+5. Avatar URL stored in `ApplicationUser.AvatarUrl` database field
+6. Public read access configured for bucket automatically
+7. Returns avatar URL in response
+
+**File Storage Architecture**:
+- `IFileStorageService` abstraction in Application layer
+- `MinioFileStorageService` implementation in Infrastructure
+- Auto-creates bucket with public read policy on first upload
+- Files stored with path: `avatars/{userId}_{guid}.{extension}`
+- URL format: `http(s)://{endpoint}/{bucket}/{filename}`
+
 **Error Handling**:
 - Custom exceptions per feature (e.g., `UnauthorizedException`, `EmailNotConfirmedException`, `InvalidRefreshTokenException`)
+- Avatar-specific exceptions: `InvalidFileTypeException`, `FileTooLargeException`
 - Exceptions organized in feature-specific `Exceptions/` folders within Identity.Application
 - Common exceptions in [Identity.Application/Common/Exceptions/](src/Identity.Application/Common/Exceptions/)
 

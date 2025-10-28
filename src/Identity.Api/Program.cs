@@ -2,6 +2,7 @@ using Identity.Api;
 using Identity.Api.Abstractions;
 using Identity.Api.Services;
 using Identity.Application;
+using Identity.Application.Abstractions;
 using Identity.Application.Models.Options;
 using Identity.Infrastructure;
 using Identity.Infrastructure.Integrations.Email;
@@ -12,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddApplicationServices();
@@ -43,6 +45,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<IAccessTokenService, AccessTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddScoped<IConfirmationLinkGenerator, ConfirmationLinkGenerator>();
 builder.Services.AddSingleton<IConfirmationEmailBuilder, ConfirmationEmailBuilder>();

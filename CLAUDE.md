@@ -8,38 +8,52 @@ This is an ASP.NET Core 8.0 Identity API service that provides JWT-based authent
 - **ASP.NET Core Identity** for user management
 - **Entity Framework Core** with PostgreSQL for data persistence
 - **JWT Bearer tokens** with refresh tokens for authentication
+- **MediatR** (CQRS pattern) for request handling
 - **MailKit** for email confirmation functionality
 - **Swagger/OpenAPI** for API documentation
 
 ## Solution Structure
 
-The solution contains two projects:
-- **Identity.Api** - Main API project with controllers, services, and persistence
-- **Identity.Domain** - Domain layer with entity definitions (currently minimal usage)
+The solution follows Clean Architecture principles with four projects:
+- **Identity.Domain** - Domain entities and core business objects
+- **Identity.Application** - Application logic with MediatR handlers, abstractions, and behaviors
+- **Identity.Infrastructure** - External concerns (database, email, persistence)
+- **Identity.Api** - Presentation layer (controllers, service implementations)
+
+**Dependency Flow**: Api → Application → Domain ← Infrastructure
 
 ## Architecture
 
 ### Key Architectural Patterns
 
-**Request Handler Pattern**: The codebase uses a custom request/response handler pattern rather than traditional service layers:
-- Controllers are thin and delegate to request handlers via `IRequestHandler<TRequest, TResponse>`
-- Each endpoint has its own folder containing: `Controller`, `Request`, `Response`, `RequestHandler`, and `Exceptions`
-- Request handlers are automatically registered via reflection in [DependencyInjection.cs](src/Identity.Api/DependencyInjection.cs)
-- Example: Login functionality lives in `Controllers/Login/` with `LoginController`, `LoginRequest`, `LoginResponse`, and `LoginRequestHandler`
+**MediatR CQRS Pattern**: The codebase uses MediatR for request/response handling:
+- Controllers inject `ISender` and dispatch requests via `sender.Send(request)`
+- Request handlers are in Identity.Application implementing `IRequestHandler<TRequest, TResponse>`
+- Requests are records implementing `IRequest<TResponse>` from MediatR
+- Responses are simple record types
+- Example: [LoginController.cs](src/Identity.Api/Controllers/LoginController.cs) dispatches [LoginRequest](src/Identity.Application/Login/LoginRequest.cs) to [LoginRequestHandler](src/Identity.Application/Login/LoginRequestHandler.cs)
+
+**MediatR Pipeline Behaviors** (registered in [Identity.Application/DependencyInjection.cs](src/Identity.Application/DependencyInjection.cs)):
+1. `UnhandledExceptionBehaviour` - Global exception handling
+2. `AuthorizationBehaviour` - Authorization checks
+3. `ValidationBehaviour` - FluentValidation integration
+4. `PerformanceBehaviour` - Performance monitoring/logging
 
 **Database Access**:
-- `ApplicationDbContext` inherits from `IdentityDbContext<ApplicationUser>` and implements `IApplicationDbContext`
+- `ApplicationDbContext` (in Infrastructure) inherits from `IdentityDbContext<ApplicationUser>` and implements `IApplicationDbContext`
+- `IApplicationDbContext` interface is in Application layer (abstractions)
 - Custom entity: `UserRefreshToken` stores hashed refresh tokens with expiration and revocation support
 - All `IEntityTypeConfiguration` implementations are auto-applied from assembly
 
 **Authentication Architecture**:
 - JWT access tokens (default: 15 minute lifetime) via `IAccessTokenService`
 - Refresh tokens (7 day lifetime) via `IRefreshTokenService` - tokens are hashed before storage using SHA256
-- Email confirmation required for login ([Program.cs:31](src/Identity.Api/Program.cs#L31))
+- Email confirmation required for login (configured in [Identity.Infrastructure/DependencyInjection.cs](src/Identity.Infrastructure/DependencyInjection.cs))
 - In development: email confirmations are logged via `LogConfirmationService`
 - In production: emails sent via SMTP using `EmailConfirmationService` and MailKit
 
-**Service Abstractions**: All major functionality is defined via interfaces in `Abstractions/`:
+**Service Abstractions**: Interfaces defined in [Identity.Application/Abstractions/](src/Identity.Application/Abstractions/):
+- `IApplicationDbContext` - Database context abstraction
 - `IAccessTokenService` - JWT generation
 - `IRefreshTokenService` - Refresh token generation and hashing
 - `IEmailSender` - SMTP email delivery
@@ -49,12 +63,12 @@ The solution contains two projects:
 
 ### API Endpoints
 
-All endpoints are organized by feature in `Controllers/`:
+All endpoints are defined in [Identity.Api/Controllers/](src/Identity.Api/Controllers/):
 - **POST /api/register** - User registration (sends confirmation email)
 - **POST /api/login** - Login with email/password (returns access + refresh tokens)
 - **POST /api/refresh** - Refresh access token using refresh token
 - **POST /api/revoke** - Revoke a refresh token
-- **GET /api/confirm-email** - Confirm email via token link
+- **POST /api/confirm-email** - Confirm email via token link
 
 ## Development Commands
 
@@ -116,14 +130,14 @@ docker run -p 8080:8080 -p 8081:8081 identity-api
 
 ### Identity Configuration
 
-Password requirements ([Program.cs:29-30](src/Identity.Api/Program.cs#L29-L30)):
+Password requirements (configured in [Identity.Infrastructure/DependencyInjection.cs](src/Identity.Infrastructure/DependencyInjection.cs)):
 - Minimum 6 characters
 - Non-alphanumeric characters NOT required
-- Email confirmation required for sign-in ([Program.cs:31](src/Identity.Api/Program.cs#L31))
+- Email confirmation required for sign-in
 
 ### Auto-Migration
 
-In development environment, database migrations run automatically on startup ([Program.cs:85-88](src/Identity.Api/Program.cs#L85-L88)).
+In development environment, database migrations run automatically on startup ([Program.cs:74](src/Identity.Api/Program.cs#L74)).
 
 ## Important Implementation Details
 
@@ -142,14 +156,55 @@ In development environment, database migrations run automatically on startup ([P
 
 **Error Handling**:
 - Custom exceptions per feature (e.g., `UnauthorizedException`, `EmailNotConfirmedException`, `InvalidRefreshTokenException`)
-- Exceptions organized in feature-specific `Exceptions/` folders
+- Exceptions organized in feature-specific `Exceptions/` folders within Identity.Application
+- Common exceptions in [Identity.Application/Common/Exceptions/](src/Identity.Application/Common/Exceptions/)
 
 ## Adding New Endpoints
 
-To add a new endpoint following the existing pattern:
-1. Create folder in `Controllers/` (e.g., `Controllers/NewFeature/`)
-2. Add `NewFeatureController.cs` with route and HTTP method
-3. Add `NewFeatureRequest.cs` and `NewFeatureResponse.cs` DTOs
-4. Add `NewFeatureRequestHandler.cs` implementing `IRequestHandler<NewFeatureRequest, NewFeatureResponse>`
-5. Add any custom exceptions in `Exceptions/` subfolder
-6. Request handler will be auto-registered by `AddRequestHandlers()` in [DependencyInjection.cs](src/Identity.Api/DependencyInjection.cs)
+To add a new endpoint following the MediatR pattern:
+
+### 1. In Identity.Application (Application Layer)
+Create folder `Identity.Application/NewFeature/` with:
+- `NewFeatureRequest.cs` - Record implementing `IRequest<NewFeatureResponse>`
+- `NewFeatureResponse.cs` - Response DTO record
+- `NewFeatureRequestHandler.cs` - Implements `IRequestHandler<NewFeatureRequest, NewFeatureResponse>`
+- `Exceptions/` subfolder for feature-specific exceptions (if needed)
+
+**Example Request:**
+```csharp
+public record NewFeatureRequest(string Param) : IRequest<NewFeatureResponse>;
+```
+
+**Example Handler:**
+```csharp
+public class NewFeatureRequestHandler : IRequestHandler<NewFeatureRequest, NewFeatureResponse>
+{
+    public async Task<NewFeatureResponse> Handle(NewFeatureRequest request, CancellationToken cancellationToken)
+    {
+        // Implementation
+        return new NewFeatureResponse();
+    }
+}
+```
+
+### 2. In Identity.Api (Presentation Layer)
+Create `Identity.Api/Controllers/NewFeatureController.cs`:
+```csharp
+[ApiController]
+[Route("api/new-feature")]
+public class NewFeatureController : ControllerBase
+{
+    [HttpPost]
+    public async Task<IActionResult> NewFeature(
+        [FromServices] ISender sender,
+        [FromBody] NewFeatureRequest request)
+    {
+        var response = await sender.Send(request);
+        return Ok(response);
+    }
+}
+```
+
+### 3. Registration
+- MediatR handlers are auto-registered by scanning the Identity.Application assembly
+- No manual registration needed in DependencyInjection.cs

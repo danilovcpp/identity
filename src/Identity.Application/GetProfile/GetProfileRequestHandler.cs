@@ -29,6 +29,6 @@ public class GetProfileRequestHandler : IRequestHandler<GetProfileRequest, GetPr
             UserName: user.UserName,
             AvatarUrl: user.AvatarUrl,
             EmailConfirmed: user.EmailConfirmed,
-            CreatedAt: DateTimeOffset.UtcNow);
+            CreatedAt: DateTimeOffset.UtcNow); // todo:
     }
 }

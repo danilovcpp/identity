@@ -7,6 +7,7 @@ using Identity.Application.Models.Options;
 using Identity.Infrastructure;
 using Identity.Infrastructure.Integrations.Email;
 using Identity.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -20,6 +21,12 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+
+// Set max file size
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 2 * 1024 * 1024; // 2 MB
+});
 
 builder.Services.AddAuthentication(options =>
     {

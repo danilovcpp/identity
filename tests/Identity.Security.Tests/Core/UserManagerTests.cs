@@ -1,41 +1,38 @@
 using Identity.Security.Abstractions;
 using Identity.Security.Core;
+using Identity.Security.Tests.Fakes;
 using Moq;
 
 namespace Identity.Security.Tests.Core;
 
 public class UserManagerTests
 {
-    private class TestUser : IUser
-    {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string UserName { get; set; } = null!;
-        public string NormalizedUserName { get; set; } = null!;
-        public string PasswordHash { get; set; } = null!;
-        public bool IsLockedOut { get; set; }
-    }
-
     [Fact]
     public async Task CreateAsync_SetsNormalizedUserName_AndHash()
     {
         var store = new Mock<IUserStore<TestUser>>();
-        var hasher = new Mock<IPasswordHasher<TestUser>>();
+        var hasher = new Mock<IPasswordHasher>();
         var normalizer = new Mock<ILookupNormalizer>();
         var userValidators = new[] { Mock.Of<IUserValidator<TestUser>>() };
         var passwordValidators = new[] { Mock.Of<IPasswordValidator<TestUser>>() };
 
         var user = new TestUser { UserName = "User" };
 
-        hasher.Setup(h => h.HashPassword(user, "Pass"))
+        hasher.Setup(h => h.HashPassword("Pass"))
             .Returns("HASH");
 
-        normalizer.Setup(n => n.Normalize("User")).Returns("USER");
+        normalizer.Setup(n => n.Normalize("User"))
+            .Returns("USER");
 
-        store.Setup(s => s.CreateAsync(user, default)).Returns(Task.CompletedTask);
+        store.Setup(s => s.CreateAsync(user, CancellationToken.None))
+            .Returns(Task.CompletedTask);
 
         var manager = new UserManager<TestUser>(
-            store.Object, hasher.Object, normalizer.Object,
-            userValidators, passwordValidators);
+            store.Object,
+            hasher.Object,
+            normalizer.Object,
+            userValidators,
+            passwordValidators);
 
         var result = await manager.CreateAsync(user, "Pass");
 
@@ -48,28 +45,31 @@ public class UserManagerTests
     public async Task FindByNameAsync_NormalizesName_BeforeSearch()
     {
         var store = new Mock<IUserStore<TestUser>>();
-        var hasher = Mock.Of<IPasswordHasher<TestUser>>();
+        var hasher = Mock.Of<IPasswordHasher>();
         var normalizer = new Mock<ILookupNormalizer>();
 
-        normalizer.Setup(x => x.Normalize("admin")).Returns("ADMIN");
+        normalizer.Setup(x => x.Normalize("admin"))
+            .Returns("ADMIN");
 
         var manager = new UserManager<TestUser>(
-            store.Object, hasher, normalizer.Object,
+            store.Object,
+            hasher,
+            normalizer.Object,
             Array.Empty<IUserValidator<TestUser>>(),
             Array.Empty<IPasswordValidator<TestUser>>());
 
         await manager.FindByNameAsync("admin");
 
-        store.Verify(x => x.FindByNameAsync("ADMIN", default), Times.Once);
+        store.Verify(x => x.FindByNameAsync("ADMIN", CancellationToken.None), Times.Once);
     }
 
     [Fact]
     public void CheckPassword_DelegatesToHasher()
     {
         var user = new TestUser { PasswordHash = "HASH" };
+        var hasher = new Mock<IPasswordHasher>();
 
-        var hasher = new Mock<IPasswordHasher<TestUser>>();
-        hasher.Setup(h => h.VerifyHashedPassword(user, "HASH", "pass"))
+        hasher.Setup(h => h.VerifyHashedPassword("HASH", "pass"))
             .Returns(PasswordVerificationResult.Success);
 
         var manager = new UserManager<TestUser>(

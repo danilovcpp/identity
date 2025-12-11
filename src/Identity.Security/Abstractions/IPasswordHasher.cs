@@ -1,12 +1,9 @@
 namespace Identity.Security.Abstractions;
 
-public interface IPasswordHasher<TUser>
+public interface IPasswordHasher
 {
-    string HashPassword(TUser user, string password);
-    PasswordVerificationResult VerifyHashedPassword(
-        TUser user,
-        string hashedPassword,
-        string providedPassword);
+    string HashPassword(string password);
+    PasswordVerificationResult VerifyHashedPassword(string hashedPassword, string providedPassword);
 }
 
 public enum PasswordVerificationResult

@@ -3,13 +3,13 @@ using Identity.Security.Abstractions;
 
 namespace Identity.Security.Services;
 
-public class PasswordHasher<TUser> : IPasswordHasher<TUser>
+public class PasswordHasher : IPasswordHasher
 {
     private const int Iterations = 310000;
     private const int SaltSize = 16;
     private const int KeySize = 32;
 
-    public string HashPassword(TUser user, string password)
+    public string HashPassword(string password)
     {
         using var rng = RandomNumberGenerator.Create();
         var salt = new byte[SaltSize];
@@ -26,10 +26,7 @@ public class PasswordHasher<TUser> : IPasswordHasher<TUser>
             salt.Concat(key).ToArray());
     }
 
-    public PasswordVerificationResult VerifyHashedPassword(
-        TUser user,
-        string hashedPassword,
-        string providedPassword)
+    public PasswordVerificationResult VerifyHashedPassword(string hashedPassword, string providedPassword)
     {
         var bytes = Convert.FromBase64String(hashedPassword);
         var salt = bytes[..SaltSize];

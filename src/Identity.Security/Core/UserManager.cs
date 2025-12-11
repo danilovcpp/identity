@@ -5,14 +5,14 @@ namespace Identity.Security.Core;
 public class UserManager<TUser> where TUser : class, IUser
 {
     private readonly IUserStore<TUser> _store;
-    private readonly IPasswordHasher<TUser> _passwordHasher;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly ILookupNormalizer _normalizer;
     private readonly IEnumerable<IUserValidator<TUser>> _userValidators;
     private readonly IEnumerable<IPasswordValidator<TUser>> _passwordValidators;
 
     public UserManager(
         IUserStore<TUser> store,
-        IPasswordHasher<TUser> passwordHasher,
+        IPasswordHasher passwordHasher,
         ILookupNormalizer normalizer,
         IEnumerable<IUserValidator<TUser>> userValidators,
         IEnumerable<IPasswordValidator<TUser>> passwordValidators)
@@ -40,7 +40,7 @@ public class UserManager<TUser> where TUser : class, IUser
             if (!r.Succeeded) return r;
         }
 
-        user.PasswordHash = _passwordHasher.HashPassword(user, password);
+        user.PasswordHash = _passwordHasher.HashPassword(password);
 
         await _store.CreateAsync(user);
         return IdentityResult.Success();
@@ -53,5 +53,5 @@ public class UserManager<TUser> where TUser : class, IUser
     }
 
     public PasswordVerificationResult CheckPassword(TUser user, string password) =>
-        _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        _passwordHasher.VerifyHashedPassword(user.PasswordHash, password);
 }

@@ -1,5 +1,4 @@
-﻿using Identity.Api.Abstractions;
-using Identity.Application.Abstractions;
+﻿using Identity.Application.Abstractions;
 using Identity.Application.Models.Options;
 using Identity.Application.Refresh.Exceptions;
 using MediatR;

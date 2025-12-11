@@ -1,4 +1,3 @@
-using Identity.Api.Abstractions;
 using Identity.Application.Abstractions;
 using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;

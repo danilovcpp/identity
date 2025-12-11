@@ -1,5 +1,4 @@
-﻿using Identity.Api.Abstractions;
-using Identity.Api.Controllers.Login;
+﻿using Identity.Api.Controllers.Login;
 using Identity.Application.Abstractions;
 using Identity.Application.Login.Exceptions;
 using Identity.Application.Models.Options;
@@ -24,12 +23,7 @@ public class LoginRequestHandler(
 
     public async Task<LoginResponse> Handle(LoginRequest request, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user == null)
-        {
-            throw new UnauthorizedException();
-        }
-
+        var user = await userManager.FindByEmailAsync(request.Email) ?? throw new UnauthorizedException();
         if (!await userManager.IsEmailConfirmedAsync(user))
         {
             throw new EmailNotConfirmedException();

@@ -1,5 +1,4 @@
 using Identity.Api;
-using Identity.Api.Abstractions;
 using Identity.Api.Services;
 using Identity.Application;
 using Identity.Application.Abstractions;
@@ -78,18 +77,22 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    await context.Database.MigrateAsync();
-}
+// todo: check IsDevelopment
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+using var scope = app.Services.CreateScope();
+var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+await context.Database.MigrateAsync();
+
+//app.UseHttpsRedirection();
+
+app.UseCors(x => x
+    .AllowAnyOrigin()
+    .AllowAnyMethod()
+    .AllowAnyHeader());
 
 app.UseAuthentication();
 app.UseAuthorization();

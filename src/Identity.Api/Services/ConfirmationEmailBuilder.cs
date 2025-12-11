@@ -1,4 +1,4 @@
-﻿using Identity.Api.Abstractions;
+﻿using Identity.Application.Abstractions;
 
 namespace Identity.Api.Services;
 

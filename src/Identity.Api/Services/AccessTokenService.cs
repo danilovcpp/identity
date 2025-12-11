@@ -1,7 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Identity.Api.Abstractions;
+using Identity.Application.Abstractions;
 using Identity.Application.Models.Options;
 using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;

@@ -1,4 +1,4 @@
-﻿namespace Identity.Api.Abstractions;
+﻿namespace Identity.Application.Abstractions;
 
 public interface IRefreshTokenService
 {

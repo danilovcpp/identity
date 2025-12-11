@@ -1,6 +1,6 @@
 ﻿using Identity.Domain.Entities;
 
-namespace Identity.Api.Abstractions;
+namespace Identity.Application.Abstractions;
 
 public interface IAccessTokenService
 {

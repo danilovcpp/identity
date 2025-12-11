@@ -1,5 +1,5 @@
 using System.Web;
-using Identity.Api.Abstractions;
+using Identity.Application.Abstractions;
 
 namespace Identity.Api.Services;
 
@@ -9,8 +9,8 @@ public class PasswordResetLinkGenerator : IPasswordResetLinkGenerator
     {
         var encodedToken = HttpUtility.UrlEncode(token);
         var encodedEmail = HttpUtility.UrlEncode(email);
-        var scheme = ""; // todo: взять из Options
-        var host = "";
+        var scheme = "https"; // todo: взять из Options
+        var host = "auth.runex.space";
 
         return $"{scheme}://{host}/api/reset-password?email={encodedEmail}&token={encodedToken}";
     }

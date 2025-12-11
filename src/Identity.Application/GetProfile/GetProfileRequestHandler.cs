@@ -5,23 +5,14 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Application.GetProfile;
 
-public class GetProfileRequestHandler : IRequestHandler<GetProfileRequest, GetProfileResponse>
+public class GetProfileRequestHandler(
+    UserManager<ApplicationUser> userManager) : IRequestHandler<GetProfileRequest, GetProfileResponse>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public GetProfileRequestHandler(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
 
     public async Task<GetProfileResponse> Handle(GetProfileRequest request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByIdAsync(request.UserId);
-
-        if (user is null)
-        {
-            throw new UserNotFoundException(request.UserId);
-        }
+        var user = await _userManager.FindByIdAsync(request.UserId) ?? throw new UserNotFoundException(request.UserId);
 
         return new GetProfileResponse(
             Id: user.Id,

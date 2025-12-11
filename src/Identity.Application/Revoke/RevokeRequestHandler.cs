@@ -1,5 +1,4 @@
-﻿using Identity.Api.Abstractions;
-using Identity.Application.Abstractions;
+﻿using Identity.Application.Abstractions;
 using Identity.Application.Revoke.Exceptions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

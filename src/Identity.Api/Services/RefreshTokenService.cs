@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using Identity.Api.Abstractions;
+using Identity.Application.Abstractions;
 
 namespace Identity.Api.Services;
 

@@ -1,4 +1,4 @@
-using Identity.Api.Abstractions;
+using Identity.Application.Abstractions;
 using Identity.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

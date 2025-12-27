@@ -52,6 +52,6 @@ public class UserManager<TUser> where TUser : class, IUser
         return await _store.FindByNameAsync(norm);
     }
 
-    public PasswordVerificationResult CheckPassword(TUser user, string password) =>
+    public bool CheckPassword(TUser user, string password) =>
         _passwordHasher.VerifyHashedPassword(user.PasswordHash, password);
 }

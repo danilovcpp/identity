@@ -70,7 +70,7 @@ public class UserManagerTests
         var hasher = new Mock<IPasswordHasher>();
 
         hasher.Setup(h => h.VerifyHashedPassword("HASH", "pass"))
-            .Returns(PasswordVerificationResult.Success);
+            .Returns(true);
 
         var manager = new UserManager<TestUser>(
             Mock.Of<IUserStore<TestUser>>(),
@@ -81,6 +81,6 @@ public class UserManagerTests
 
         var result = manager.CheckPassword(user, "pass");
 
-        Assert.Equal(PasswordVerificationResult.Success, result);
+        Assert.True(result);
     }
 }

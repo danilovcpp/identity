@@ -16,8 +16,9 @@ builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+
 builder.Services.AddIdentityApplication();
-builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 

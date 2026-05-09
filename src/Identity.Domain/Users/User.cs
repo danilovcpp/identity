@@ -15,6 +15,7 @@ public class User : AggregateRoot<UserId>, IHasDomainEvents
         AccountName = accountName;
         FirstName = firstName;
         LastName = lastName;
+        CreatedAt = createdAt;
     }
 
     public string AccountName { get; private set; }

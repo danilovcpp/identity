@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Identity.Application.Accounts.Commands.DeleteAvatar;
 using Identity.Application.Accounts.Commands.UploadAvatar;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
 

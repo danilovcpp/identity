@@ -1,5 +1,6 @@
 ﻿using Identity.Core;
 using Identity.Domain.Tenants.Events;
+using Identity.Domain.Users;
 
 namespace Identity.Domain.Tenants;
 
@@ -24,6 +25,8 @@ public class Tenant : AggregateRoot<TenantId>, IHasDomainEvents
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? SuspendedAt { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
+
+    public ICollection<User> Users { get; } = [];
 
     public bool IsActive => Status == TenantStatus.Active;
 

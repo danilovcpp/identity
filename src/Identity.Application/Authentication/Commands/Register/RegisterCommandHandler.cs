@@ -2,6 +2,7 @@
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Common;
 using Identity.Core;
+using Identity.Domain.Tenants;
 using Identity.Domain.Users;
 using Microsoft.Extensions.Logging;
 
@@ -11,13 +12,16 @@ public sealed class RegisterCommandHandler(
     ILogger<RegisterCommandHandler> logger,
     IClock clock,
     IUserRepository userRepository,
+    IUnitOfWork unitOfWork,
     IEmailConfirmationService emailConfirmationService) : ICommandHandler<RegisterCommand, RegisterResponse>
 {
     public async Task<Result<RegisterResponse>> HandleAsync(
         RegisterCommand command,
         CancellationToken cancellationToken)
     {
+        var tenantId = new TenantId(command.TenantId);
         var result = User.Create(
+            tenantId,
             command.AccountName,
             command.FirstName,
             command.LastName,
@@ -27,7 +31,9 @@ public sealed class RegisterCommandHandler(
 
         userRepository.Add(user);
 
-        await emailConfirmationService.SendConfirmationLink(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        //await emailConfirmationService.SendConfirmationLink(user);
 
         return new RegisterResponse();
     }

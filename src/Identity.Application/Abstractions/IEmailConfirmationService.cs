@@ -1,8 +1,8 @@
-﻿using Identity.Domain.Entities;
+﻿using Identity.Domain.Users;
 
 namespace Identity.Application.Abstractions;
 
 public interface IEmailConfirmationService
 {
-    Task SendConfirmationLink(ApplicationUser user);
+    Task SendConfirmationLink(User user);
 }

@@ -1,5 +1,4 @@
-﻿using Identity.Application.Refresh;
-using MediatR;
+﻿using Identity.Application.Authentication.Commands.Refresh;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -10,10 +9,9 @@ public class RefreshController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Refresh(
-        [FromServices] ISender sender,
-        [FromBody] RefreshRequest request)
+        [FromBody] RefreshCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

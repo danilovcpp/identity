@@ -1,8 +1,8 @@
-using Identity.Domain.Entities;
+using Identity.Domain.Users;
 
 namespace Identity.Application.Abstractions;
 
 public interface IPasswordResetEmailService
 {
-    Task SendPasswordResetLink(ApplicationUser user);
+    Task SendPasswordResetLink(User user);
 }

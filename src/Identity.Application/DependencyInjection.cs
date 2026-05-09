@@ -1,25 +1,35 @@
 ﻿using System.Reflection;
 using FluentValidation;
-using Identity.Application.Common.Behaviours;
-using MediatR;
+using Identity.Application.Common;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddIdentityApplication(this IServiceCollection services)
     {
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        var assembly = Assembly.GetExecutingAssembly();
 
-        services.AddMediatR(cfg => {
-            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
-        });
+        services.AddValidatorsFromAssembly(assembly, ServiceLifetime.Singleton);
+
+        // Register all command/query handlers.
+        RegisterHandlers(services, assembly, typeof(ICommandHandler<,>));
+        RegisterHandlers(services, assembly, typeof(IQueryHandler<,>));
 
         return services;
+    }
+
+    private static void RegisterHandlers(IServiceCollection services, Assembly asm, Type openInterface)
+    {
+        var implementations =
+            from t in asm.GetTypes()
+            where t is { IsAbstract: false, IsInterface: false }
+            from i in t.GetInterfaces()
+            where i.IsGenericType && i.GetGenericTypeDefinition() == openInterface
+            select (Service: i, Implementation: t);
+
+        foreach (var (service, impl) in implementations)
+            services.AddScoped(service, impl);
     }
 }

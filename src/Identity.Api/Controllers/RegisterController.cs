@@ -1,6 +1,4 @@
-﻿using Identity.Application.Authentication.Register;
-using Identity.Application.Register;
-using MediatR;
+﻿using Identity.Application.Authentication.Commands.Register;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -11,10 +9,9 @@ public class RegisterController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Register(
-        [FromServices] ISender sender,
-        [FromBody] RegisterRequest request)
+        [FromBody] RegisterCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

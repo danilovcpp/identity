@@ -1,8 +1,8 @@
-using Identity.Application.Avatar;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Identity.Application.Accounts.Commands.DeleteAvatar;
+using Identity.Application.Accounts.Commands.UploadAvatar;
 
 namespace Identity.Api.Controllers;
 
@@ -14,44 +14,44 @@ public class AvatarController : ControllerBase
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadAvatar(
-        [FromServices] ISender sender,
         IFormFile file)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        if (file is null || file.Length == 0)
-        {
-            return BadRequest(new { message = "No file uploaded." });
-        }
-
-        await using var stream = file.OpenReadStream();
-
-        var request = new UploadAvatarRequest(
-            userId,
-            stream,
-            file.FileName,
-            file.ContentType);
-
-        var response = await sender.Send(request);
-
-        return Ok(response);
+        // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // if (string.IsNullOrEmpty(userId))
+        // {
+        //     return Unauthorized();
+        // }
+        //
+        // if (file is null || file.Length == 0)
+        // {
+        //     return BadRequest(new { message = "No file uploaded." });
+        // }
+        //
+        // await using var stream = file.OpenReadStream();
+        //
+        // var request = new UploadAvatarCommand(
+        //     userId,
+        //     stream,
+        //     file.FileName,
+        //     file.ContentType);
+        //
+        // var response = await sender.Send(request);
+        //
+        // return Ok(response);
+        throw new NotImplementedException();
     }
 
     [HttpDelete]
-    public async Task<IActionResult> DeleteAvatar([FromServices] ISender sender)
+    public async Task<IActionResult> DeleteAvatar()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
-
-        var request = new DeleteAvatarRequest(userId);
-        await sender.Send(request);
+        // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // if (string.IsNullOrEmpty(userId))
+        // {
+        //     return Unauthorized();
+        // }
+        //
+        // var request = new DeleteAvatarCommand(userId);
+        // await sender.Send(request);
 
         return NoContent();
     }

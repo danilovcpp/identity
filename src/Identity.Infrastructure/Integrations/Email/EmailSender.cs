@@ -1,4 +1,5 @@
 using Identity.Application.Abstractions;
+using Identity.Application.Abstractions.Integrations;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;

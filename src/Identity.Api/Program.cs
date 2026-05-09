@@ -1,7 +1,7 @@
-using Identity.Api;
 using Identity.Api.Services;
 using Identity.Application;
 using Identity.Application.Abstractions;
+using Identity.Application.Abstractions.Security;
 using Identity.Application.Models.Options;
 using Identity.Infrastructure;
 using Identity.Infrastructure.Integrations.Email;
@@ -16,7 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
-builder.Services.AddApplicationServices();
+builder.Services.AddIdentityApplication();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
@@ -69,8 +69,6 @@ else
     builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
     builder.Services.AddScoped<IPasswordResetEmailService, PasswordResetEmailService>();
 }
-
-builder.Services.AddRequestHandlers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

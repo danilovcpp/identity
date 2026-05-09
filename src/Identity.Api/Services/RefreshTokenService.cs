@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using Identity.Application.Abstractions;
+using Identity.Application.Abstractions.Security;
 
 namespace Identity.Api.Services;
 
@@ -11,6 +11,7 @@ public class RefreshTokenService : IRefreshTokenService
         var randomNumber = new byte[64];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
+
         return Convert.ToBase64String(randomNumber);
     }
 
@@ -18,6 +19,7 @@ public class RefreshTokenService : IRefreshTokenService
     {
         var tokenBytes = Encoding.UTF8.GetBytes(token);
         var hashBytes = SHA256.HashData(tokenBytes);
+
         return Convert.ToHexString(hashBytes);
     }
 }

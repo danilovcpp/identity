@@ -1,4 +1,5 @@
 using Identity.Application.Abstractions;
+using Identity.Application.Abstractions.Integrations;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;

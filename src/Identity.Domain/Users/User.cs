@@ -1,54 +1,60 @@
-﻿using Identity.Domain.Roles;
+﻿using Identity.Core;
+using Identity.Domain.Users.Events;
 
 namespace Identity.Domain.Users;
 
-public sealed class User
+public class User : AggregateRoot<UserId>, IHasDomainEvents
 {
-    public Guid Id { get; private set; }
-    public string? Email { get; private set; }
-    public string? Phone { get; private set; }
-    public string? DisplayName { get; private set; }
-    public UserStatus Status { get; private set; }
-    public DateTimeOffset? EmailVerifiedAt { get; private set; }
-    public DateTimeOffset? PhoneVerifiedAt { get; private set; }
-    public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset UpdatedAt { get; private set; }
-    public DateTimeOffset? DeletedAt { get; private set; }
-
-    private readonly List<UserRole> _roles = new();
-    public IReadOnlyCollection<UserRole> Roles => _roles;
-
-    private User() { }
-
-    public static User Create(string email, string? displayName, DateTimeOffset now)
+    private User(
+        UserId id,
+        string accountName,
+        string firstName,
+        string lastName,
+        DateTimeOffset createdAt) : base(id)
     {
-        return new User
-        {
-            Id = Guid.NewGuid(),
-            Email = email.Trim(),
-            DisplayName = displayName,
-            Status = UserStatus.PendingVerification,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+        AccountName = accountName;
+        FirstName = firstName;
+        LastName = lastName;
     }
 
-    public void Activate(DateTimeOffset now)
+    public string AccountName { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public DateTimeOffset CreatedAt { get; }
+
+    public static Result<User> Create(
+        string accountName,
+        string firstName,
+        string lastName,
+        IClock clock)
     {
-        Status = UserStatus.Active;
-        EmailVerifiedAt = now;
-        UpdatedAt = now;
+        ArgumentNullException.ThrowIfNull(clock);
+
+        // todo: check if null
+
+        var user = new User(
+            id: UserId.New(),
+            accountName: accountName,
+            firstName: firstName,
+            lastName: lastName,
+            createdAt: clock.UtcNow);
+        
+        user.RaiseDomainEvent(new UserCreated(user.Id, user.CreatedAt));
+        return user;
     }
 
-    public void Block(DateTimeOffset now)
+    public Result Activate(IClock clock)
     {
-        Status = UserStatus.Blocked;
-        UpdatedAt = now;
+        return Result.Failure(new DomainError("notimplemented", "Notimplemented"));
     }
 
-    public void Unblock(DateTimeOffset now)
+    public Result Block(IClock clock)
     {
-        Status = UserStatus.Active;
-        UpdatedAt = now;
+        return Result.Failure(new DomainError("notimplemented", "Notimplemented"));
+    }
+
+    public Result Unblock(DateTimeOffset now)
+    {
+        return Result.Failure(new DomainError("notimplemented", "Notimplemented"));
     }
 }

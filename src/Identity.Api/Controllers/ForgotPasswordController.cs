@@ -1,5 +1,4 @@
-using Identity.Application.ForgotPassword;
-using MediatR;
+using Identity.Application.Authentication.Commands.ForgotPassword;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -10,10 +9,9 @@ public class ForgotPasswordController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> ForgotPassword(
-        [FromServices] ISender sender,
-        [FromBody] ForgotPasswordRequest request)
+        [FromBody] ForgotPasswordCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

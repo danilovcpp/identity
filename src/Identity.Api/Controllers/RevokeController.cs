@@ -1,6 +1,4 @@
-﻿using Identity.Application.Revoke;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
 
@@ -9,11 +7,9 @@ namespace Identity.Api.Controllers;
 public class RevokeController : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Revoke(
-        [FromServices] ISender sender,
-        [FromBody] RevokeRequest request)
+    public async Task<IActionResult> Revoke()
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

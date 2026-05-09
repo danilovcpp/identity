@@ -1,5 +1,4 @@
-﻿using Identity.Application.ConfirmEmail;
-using MediatR;
+﻿using Identity.Application.Authentication.Commands.ConfirmEmail;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -10,10 +9,9 @@ public class ConfirmEmailController : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> ConfirmEmail(
-        ISender sender,
-        [FromQuery] ConfirmEmailRequest request)
+        [FromQuery] ConfirmEmailCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

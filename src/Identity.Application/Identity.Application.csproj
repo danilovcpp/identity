@@ -1,17 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Accounts\" />
-    <Folder Include="Admin\BlockUser\" />
-    <Folder Include="Admin\GetAudit\" />
-    <Folder Include="Admin\UnblockUser\" />
-    <Folder Include="Authentication\" />
+    <Folder Include="Accounts\Queries\" />
+    <Folder Include="Authentication\Commands\" />
   </ItemGroup>
 </Project>

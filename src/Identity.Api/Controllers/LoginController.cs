@@ -1,5 +1,4 @@
-﻿using Identity.Application.Login;
-using MediatR;
+﻿using Identity.Application.Authentication.Commands.Login;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -10,10 +9,9 @@ public class LoginController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Login(
-        [FromServices] ISender sender,
-        [FromBody] LoginRequest request)
+        [FromBody] LoginCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

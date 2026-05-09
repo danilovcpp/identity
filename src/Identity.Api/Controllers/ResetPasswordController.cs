@@ -1,5 +1,4 @@
-using Identity.Application.ResetPassword;
-using MediatR;
+using Identity.Application.Authentication.Commands.ResetPassword;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -10,10 +9,9 @@ public class ResetPasswordController : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> ResetPassword(
-        [FromServices] ISender sender,
-        [FromBody] ResetPasswordRequest request)
+        [FromBody] ResetPasswordCommand command)
     {
-        var response = await sender.Send(request);
-        return Ok(response);
+        //return Ok(response);
+        throw new NotImplementedException();
     }
 }

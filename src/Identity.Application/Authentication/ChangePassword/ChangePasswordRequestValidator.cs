@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Identity.Application.ChangePassword;
+namespace Identity.Application.Authentication.ChangePassword;
 
 public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRequest>
 {

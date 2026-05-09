@@ -1,3 +1,4 @@
+using Identity.Application.Authentication.ChangePassword;
 using Identity.Application.ChangePassword;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

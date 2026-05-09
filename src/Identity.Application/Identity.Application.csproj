@@ -7,4 +7,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Accounts\" />
+    <Folder Include="Admin\BlockUser\" />
+    <Folder Include="Admin\GetAudit\" />
+    <Folder Include="Admin\UnblockUser\" />
+    <Folder Include="Authentication\" />
+  </ItemGroup>
 </Project>

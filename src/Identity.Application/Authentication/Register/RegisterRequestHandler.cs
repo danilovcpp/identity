@@ -1,12 +1,13 @@
 ﻿using Identity.Application.Abstractions;
+using Identity.Application.Register;
 using Identity.Application.Register.Exceptions;
 using Identity.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
-namespace Identity.Application.Register;
+namespace Identity.Application.Authentication.Register;
 
-public class RegisterRequestHandler(
+public sealed class RegisterRequestHandler(
     UserManager<ApplicationUser> userManager,
     IEmailConfirmationService emailConfirmationService) : IRequestHandler<RegisterRequest, RegisterResponse>
 {

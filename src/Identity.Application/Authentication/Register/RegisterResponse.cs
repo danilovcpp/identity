@@ -1,6 +1,6 @@
-﻿namespace Identity.Application.Register;
+﻿namespace Identity.Application.Authentication.Register;
 
-public class RegisterResponse
+public sealed class RegisterResponse
 {
     public string Message { get; set; } = "Регистрация успешна. Проверьте email для подтверждения.";
 }

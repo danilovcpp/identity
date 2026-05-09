@@ -1,4 +1,5 @@
-﻿using Identity.Application.Register;
+﻿using Identity.Application.Authentication.Register;
+using Identity.Application.Register;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

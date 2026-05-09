@@ -4,7 +4,7 @@ using Identity.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
-namespace Identity.Application.ChangePassword;
+namespace Identity.Application.Authentication.ChangePassword;
 
 public class ChangePasswordRequestHandler(
     ICurrentUserService currentUserService,
